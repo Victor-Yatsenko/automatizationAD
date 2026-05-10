@@ -1,0 +1,10 @@
+__pycache__/
+/.LOGS
+.vscode/
+/settings
+/venv
+.env
+.TZ.txt
+README.md
+run_automationAD.bat
+create_user_ad.ps1
