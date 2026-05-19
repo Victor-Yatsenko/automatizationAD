@@ -4,6 +4,7 @@ import json
 from settings import logger
 from fastapi import FastAPI, Header, HTTPException
 import create_user.info_for_create_user as info_for_create_user
+import send_message_to_teams_chanel
 import create_user.send_email as send_email
 
 
@@ -40,15 +41,20 @@ async def create_user_in_AD(
                 except json.JSONDecodeError:
                     continue
         
-        # Відправляємо листи (керівнику та копію)
-        logger.info("Відправка листа")
+
         user_password = output_data.get("UserPassword")
         manager_email = output_data.get("ManagerEmail")
         if user_password:
+            logger.info("Відправка повідомлення в Тімс")
+            send_message_to_teams_chanel.send_message(data, user_password)
+            logger.info("Повідомлення успішно відправлено!")
+
+            # Відправляємо листи (керівнику та копію)
+            logger.info("Відправка листа")
             send_email.send_email(data, user_password, manager_email)
             logger.info("Лист успішно відправлено!")
         else:
-            logger.warning("Пароль не знайдено в PowerShell виводі, лист не відправлено.")
+            logger.warning("Пароль не знайдено в PowerShell виводі, лист та повідомлення не відправлено.")
 
 
         return { #повертаємо результат для Power Automate (щоб скрипт завершив роботу)

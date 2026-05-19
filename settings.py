@@ -30,10 +30,11 @@ try:
     DISABLE_USER_URL = os.environ["DISABLE_USER_URL"]
     SENDER_EMAIL = os.environ["SENDER_EMAIL"]
     RECIPIENT_EMAIL = os.environ["RECIPIENT_EMAIL"]
+    TEAMS_WEBHOOK_URL = os.environ["TEAMS_WEBHOOK_URL"]
 
     # no env variables
-    PATCH_EASY_START_FRONT_OFFICE_DOCX = "create_user\\easy-start-front-office.docx"
-    PATCH_EASY_START_BACK_OFFICE_DOCX = "create_user\\easy-start-back-office.docx"
+    PATCH_EASY_START_FRONT_OFFICE_DOCX = "create_user\\easy-start-docx\\easy-start-front-office.docx"
+    PATCH_EASY_START_BACK_OFFICE_DOCX = "create_user\\easy-start-docx\\easy-start-back-office.docx"
     AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
     SCOPES = ["https://graph.microsoft.com/.default"]
 except Exception as e:

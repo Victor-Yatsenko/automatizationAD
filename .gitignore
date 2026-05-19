@@ -5,7 +5,7 @@ create_user/settings_for_ad/
 *.docx
 
 
-/venv
+.venv/
 .env
 .TZ.txt
 README.md

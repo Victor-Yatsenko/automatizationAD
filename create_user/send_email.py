@@ -32,15 +32,16 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
     context = {"name": f"{f"{first_name_en}.{last_name_en}"}", "password": user_password}
     base_easy_start_docx = DocxTemplate(PATCH_EASY_START_DOCX)
     base_easy_start_docx.render(context)
-    base_easy_start_docx.save(f"create_user\\easy-start-{full_name_ua_str}.docx")
+    base_easy_start_docx.save(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
+    
 
     # Конвертуємо документ в PDF а docx видаляємо
-    convert(f"create_user\\easy-start-{full_name_ua_str}.docx", f"create_user\\easy-start-{full_name_ua_str}.pdf")
-    path_to_delete_file = Path(f"create_user\\easy-start-{full_name_ua_str}.docx")
+    convert(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx", f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.pdf")
+    path_to_delete_file = Path(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
     path_to_delete_file.unlink(missing_ok=True)
 
     # Шлях до файлу, який хочемо прикріпити
-    file_to_attach = f"create_user\\easy-start-{full_name_ua_str}.pdf"
+    file_to_attach = f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.pdf"
     encoded_file = get_base64_content(file_to_attach)
     
     logger.success("PDF файл сформовано")
