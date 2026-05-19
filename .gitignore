@@ -1,10 +1,12 @@
 __pycache__/
-/.LOGS
+.LOGS/
 .vscode/
-/settings
+create_user/settings_for_ad/
+*.docx
+
+
 /venv
 .env
 .TZ.txt
 README.md
 run_automationAD.bat
-create_user_ad.ps1
