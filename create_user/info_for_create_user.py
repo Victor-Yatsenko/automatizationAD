@@ -68,11 +68,10 @@ def prepare_user_info(data: PowerAutomateData):
 
     if result.returncode == 0:
         logger.success(f"Обліковий запис для {first_name_ua, last_name_ua} успішно створено в AD.")
-        # Якщо PowerShell щось вивів у консоль (наприклад, якісь деталі)
+        # Логуємо те що PowerShell вивів у консоль
         if result.stdout.strip():
             logger.info(f"PowerShell вивід: {result.stdout.strip()}")
     else:
-        # Якщо сталась помилка в PowerShell
         logger.error(f"Помилка створення облікового запису для {first_name_ua, last_name_ua}")
         logger.error(f"Деталі помилки: {result.stderr.strip()}")
 

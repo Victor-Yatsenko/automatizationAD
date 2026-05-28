@@ -1,5 +1,6 @@
 from create_user.info_for_create_user import PowerAutomateData
 import requests
+import json
 import msal
 import base64
 import settings
@@ -7,6 +8,21 @@ from settings import logger
 from docxtpl import DocxTemplate
 from docx2pdf import convert
 from pathlib import Path
+
+
+def send_message_to_teams(data: PowerAutomateData, password):
+    message = f"""
+**✅ В AD створено нового користувача** \n
+**🐣 Ім'я:** {data.full_name_ua} | {data.full_name_en} \n
+**🏢 Відділ:** {data.department} \n
+**💼 Посада:** {data.title_en} | {data.title_ua} \n
+**🔑 Пароль:** {password}
+"""
+
+    headers = {'Content-Type': 'application/json'}
+    payload = {'text': message}
+
+    response = requests.post(settings.TEAMS_WEBHOOK_URL, data= json.dumps(payload), headers=headers)
 
 
 
@@ -35,7 +51,7 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
     base_easy_start_docx.save(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
     
 
-    # Конвертуємо документ в PDF а docx видаляємо
+    # Конвертуємо документ в pdf а docx видаляємо
     convert(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx", f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.pdf")
     path_to_delete_file = Path(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
     path_to_delete_file.unlink(missing_ok=True)
@@ -50,7 +66,7 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
     html_content = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif;">
         <p>Вітаю!</p>
-        <p">До команди приєдрунється новий співробітник.</p>
+        <p>До команди приєдрунється новий співробітник.</p>
         <p>У вкладені стартова інструкція для {full_name_ua_str}.</p>
         <p>Гарного дня!</p>
     </div>
@@ -99,7 +115,6 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
                 {
                     "@odata.type": "#microsoft.graph.fileAttachment",
                     "name": f"easy-start-{full_name_ua_str}.pdf",
-                    # "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  якщо всетаки буде docx
                     "contentType": "application/pdf",
                     "contentBytes": encoded_file
                 }

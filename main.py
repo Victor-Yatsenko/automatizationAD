@@ -4,14 +4,12 @@ import json
 from settings import logger
 from fastapi import FastAPI, Header, HTTPException
 import create_user.info_for_create_user as info_for_create_user
-import send_message_to_teams_chanel
-import create_user.send_email as send_email
+import create_user.send as send
 
 
 app = FastAPI()
 
 
-# СТВОРЕННЯ КОРИСТУВАЧА
 @app.post(f"{settings.CREATE_USER_URL}")
 async def create_user_in_AD(
     data: info_for_create_user.PowerAutomateData,
@@ -28,16 +26,13 @@ async def create_user_in_AD(
 
     # Аналізуємо результат виконання PS скрипта та відправляємо лист керівнику
     if ps_result.returncode == 0:
-        # Витягуємо повернені данні з PowerShell скрипту
         output_data = {}
-        # Перебираємо всі рядки, які повернув PowerShell
         for line in ps_result.stdout.splitlines():
             line = line.strip()
-            # Шукаємо рядок, який схожий на JSON (починається на { і закінчується на })
             if line.startswith('{') and line.endswith('}'):
                 try:
                     output_data = json.loads(line)
-                    break  # Коли знайшли потрібний рядок, припиняємо пошук
+                    break
                 except json.JSONDecodeError:
                     continue
         
@@ -46,12 +41,12 @@ async def create_user_in_AD(
         manager_email = output_data.get("ManagerEmail")
         if user_password:
             logger.info("Відправка повідомлення в Тімс")
-            send_message_to_teams_chanel.send_message(data, user_password)
+            send.send_message_to_teams(data, user_password)
             logger.info("Повідомлення успішно відправлено!")
 
             # Відправляємо листи (керівнику та копію)
             logger.info("Відправка листа")
-            send_email.send_email(data, user_password, manager_email)
+            send.send_email(data, user_password, manager_email)
             logger.info("Лист успішно відправлено!")
         else:
             logger.warning("Пароль не знайдено в PowerShell виводі, лист та повідомлення не відправлено.")
@@ -63,7 +58,6 @@ async def create_user_in_AD(
             "message": "Користувач успішно створений в AD та лист відправлено керівнику.",
         }
     else:
-        # Якщо PowerShell повернув помилку
         raise HTTPException(
             status_code=500,
             detail={"message": "PowerShell script failed", "error": ps_result.stderr}
@@ -71,14 +65,5 @@ async def create_user_in_AD(
 
 
 
-# ВИМКНЕННЯ КОРИСТУВАЧА
-@app.post(f"{settings.DISABLE_USER_URL}")
-async def enable_user():
-    pass
-
-
-
 if __name__ == "__main__":
-    # Щоб сервер працював і чекав на запити, потрібно використовувати uvicorn
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)
-
