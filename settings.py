@@ -30,7 +30,7 @@ try:
     SENDER_EMAIL      = os.environ["SENDER_EMAIL"] # Від імені кого відправляти листи (повинен бути зареєстрований в Azure AD)
     RECIPIENT_EMAIL   = os.environ["RECIPIENT_EMAIL"] # Копія листа
     TEAMS_WEBHOOK_URL = os.environ["TEAMS_WEBHOOK_URL"]
-    # AD arguments
+        # AD arguments
     OFFICE   = os.environ["OFFICE"]
     WEB_PAGE = os.environ["WEB_PAGE"]
     COMPANY  = os.environ["COMPANY"]
