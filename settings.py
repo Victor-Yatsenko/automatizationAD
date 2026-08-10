@@ -18,7 +18,7 @@ logger.opt(raw=True).info("\n""\n\n")
 
 try:
     # env
-    logger.info("Отримання змінних оточення")
+    # logger.info("Отримання змінних оточення")
     dotenv.load_dotenv()
     CLIENT_ID     = os.environ["CLIENT_ID"]
     TENANT_ID     = os.environ["TENANT_ID"]
@@ -26,16 +26,21 @@ try:
     POWER_AUTOMATE_SECRET_TOKEN  = os.environ["POWER_AUTOMATE_SECRET_TOKEN"]
     HOST = os.environ["HOST"]
     PORT = os.environ["PORT"]
-    CREATE_USER_URL = os.environ["CREATE_USER_URL"]
-    DISABLE_USER_URL = os.environ["DISABLE_USER_URL"]
-    SENDER_EMAIL = os.environ["SENDER_EMAIL"]
-    RECIPIENT_EMAIL = os.environ["RECIPIENT_EMAIL"]
+    CREATE_USER_URL   = os.environ["CREATE_USER_URL"]
+    SENDER_EMAIL      = os.environ["SENDER_EMAIL"] # Від імені кого відправляти листи (повинен бути зареєстрований в Azure AD)
+    RECIPIENT_EMAIL   = os.environ["RECIPIENT_EMAIL"] # Копія листа
+    TEAMS_WEBHOOK_URL = os.environ["TEAMS_WEBHOOK_URL"]
+    # AD arguments
+    OFFICE   = os.environ["OFFICE"]
+    WEB_PAGE = os.environ["WEB_PAGE"]
+    COMPANY  = os.environ["COMPANY"]
 
     # no env variables
-    PATCH_EASY_START_FRONT_OFFICE_DOCX = "create_user\\easy-start-front-office.docx"
-    PATCH_EASY_START_BACK_OFFICE_DOCX = "create_user\\easy-start-back-office.docx"
+    PATCH_EASY_START_FRONT_OFFICE_DOCX = "create_user\\easy-start-docx\\easy-start-front-office.docx"
+    PATCH_EASY_START_BACK_OFFICE_DOCX = "create_user\\easy-start-docx\\easy-start-back-office.docx"
     AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
     SCOPES = ["https://graph.microsoft.com/.default"]
+    
 except Exception as e:
     logger.critical(f"Змінні оточення {e} не отримано, перевірте файл .env")
 

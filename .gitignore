@@ -7,6 +7,5 @@ create_user/settings_for_ad/
 
 /venv
 .env
-.TZ.txt
 README.md
 run_automationAD.bat

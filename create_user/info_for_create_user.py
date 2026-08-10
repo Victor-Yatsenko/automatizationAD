@@ -1,5 +1,7 @@
 import os
 import subprocess
+import json
+import settings
 from pydantic import BaseModel
 from typing import Optional
 from settings import logger
@@ -51,13 +53,13 @@ def prepare_user_info(data: PowerAutomateData):
         f"-FirstNameEN \"{first_name_en}\" "
         f"-LastNameEN \"{last_name_en}\" "
         f"-UserUPNlogon \"{email}\" "
-        f"-Office \"ЦУМ\" "
+        f"-Office \"{settings.OFFICE}\" "
         f"-Email \"{email}\" "
-        f"-WebPage \"TSUM.UA\" "
+        f"-WebPage \"{settings.WEB_PAGE}\" "
         f"-Phone \"{phone}\" "
         f"-Title \"{title}\" "
         f"-DepartmentName \"{department}\" "
-        f"-Company \"TSUM\" "
+        f"-Company \"{settings.COMPANY}\" "
         f"-ManagerName \"{manager_name}\" "
         f"-Description \"{title}\""
     ]
@@ -66,14 +68,28 @@ def prepare_user_info(data: PowerAutomateData):
     result = subprocess.run(args, capture_output=True, text=True, encoding='utf-8')
 
 
-    if result.returncode == 0:
-        logger.success(f"Обліковий запис для {first_name_ua, last_name_ua} успішно створено в AD.")
-        # Якщо PowerShell щось вивів у консоль (наприклад, якісь деталі)
-        if result.stdout.strip():
-            logger.info(f"PowerShell вивід: {result.stdout.strip()}")
+    if result.returncode == 0: logger.success(f"Обліковий запис для {first_name_ua} {last_name_ua} успішно створено в AD.")
+
+    
+    raw_output = result.stdout.strip()
+    if raw_output:
+        try:
+            # 1. Перетворюємо вивід PowerShell у Python-словник
+            ad_data = json.loads(raw_output)
+            
+            # 2. Робимо копію виключно для безпечного логування
+            log_data = ad_data.copy()
+            if "UserPassword" in log_data:
+                log_data["UserPassword"] = "***"
+            
+            # 3. Записуємо в лог безпечну копію
+            logger.info(f"PowerShell вивід: {json.dumps(log_data, ensure_ascii=False)}")
+        except json.JSONDecodeError:
+            # Резервний варіант, якщо PowerShell несподівано вивів не JSON текст
+            logger.info(f"PowerShell вивід (не JSON): {raw_output}")
     else:
         # Якщо сталась помилка в PowerShell
-        logger.error(f"Помилка створення облікового запису для {first_name_ua, last_name_ua}")
+        logger.error(f"Помилка створення облікового запису для {first_name_ua} {last_name_ua}")
         logger.error(f"Деталі помилки: {result.stderr.strip()}")
 
     return result

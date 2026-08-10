@@ -4,13 +4,12 @@ import json
 from settings import logger
 from fastapi import FastAPI, Header, HTTPException
 import create_user.info_for_create_user as info_for_create_user
-import create_user.send_email as send_email
+import create_user.send as send
 
 
 app = FastAPI()
 
 
-# СТВОРЕННЯ КОРИСТУВАЧА
 @app.post(f"{settings.CREATE_USER_URL}")
 async def create_user_in_AD(
     data: info_for_create_user.PowerAutomateData,
@@ -40,15 +39,23 @@ async def create_user_in_AD(
                 except json.JSONDecodeError:
                     continue
         
-        # Відправляємо листи (керівнику та копію)
-        logger.info("Відправка листа")
+
         user_password = output_data.get("UserPassword")
         manager_email = output_data.get("ManagerEmail")
         if user_password:
-            send_email.send_email(data, user_password, manager_email)
-            logger.info("Лист успішно відправлено!")
+            logger.info("Відправка повідомлення в Тімс")
+            send.send_message_to_teams(data, user_password)
+            logger.info("Повідомлення успішно відправлено!")
         else:
-            logger.warning("Пароль не знайдено в PowerShell виводі, лист не відправлено.")
+            logger.warning("Пароль не знайдено в PowerShell виводі, повідомлення не відправлено.")
+
+        if user_password and manager_email:
+            # Відправляємо листи (керівнику та копію)
+            logger.info("Відправка листа")
+            send.send_email(data, user_password, manager_email)
+            logger.info("Лист успішно відправлено!")      
+        else:
+            logger.warning("Пароль та керівника не знайдено в PowerShell виводі, лист не відправлено.")
 
 
         return { #повертаємо результат для Power Automate (щоб скрипт завершив роботу)
@@ -65,14 +72,7 @@ async def create_user_in_AD(
 
 
 
-# ВИМКНЕННЯ КОРИСТУВАЧА
-@app.post(f"{settings.DISABLE_USER_URL}")
-async def enable_user():
-    pass
-
-
-
 if __name__ == "__main__":
     # Щоб сервер працював і чекав на запити, потрібно використовувати uvicorn
-    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)
+    uvicorn.run("main:app", host=settings.HOST, port=int(settings.PORT), reload=True)
 

@@ -1,12 +1,39 @@
 from create_user.info_for_create_user import PowerAutomateData
 import requests
+import json
 import msal
 import base64
+import subprocess
 import settings
 from settings import logger
 from docxtpl import DocxTemplate
 from docx2pdf import convert
 from pathlib import Path
+
+
+def send_message_to_teams(data: PowerAutomateData, password):
+    message = f"""
+**✅ В AD створено нового користувача** \n
+**🐣 Ім'я:** {data.full_name_ua} | {data.full_name_en} \n
+**🏢 Відділ:** {data.department} \n
+**💼 Посада:** {data.title_en} | {data.title_ua} \n
+**🔑 Пароль:** {password}
+"""
+
+    headers = {'Content-Type': 'application/json'}
+    payload = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "22C55E",
+        "summary": "Створено нового користувача",
+        "sections": [
+            {
+                "text": message
+            }
+        ]
+    }
+
+    response = requests.post(settings.TEAMS_WEBHOOK_URL, data=json.dumps(payload), headers=headers)
 
 
 
@@ -32,15 +59,39 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
     context = {"name": f"{f"{first_name_en}.{last_name_en}"}", "password": user_password}
     base_easy_start_docx = DocxTemplate(PATCH_EASY_START_DOCX)
     base_easy_start_docx.render(context)
-    base_easy_start_docx.save(f"create_user\\easy-start-{full_name_ua_str}.docx")
+    base_easy_start_docx.save(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
+    logger.info("Файл docx сформовано")
+    
 
     # Конвертуємо документ в PDF а docx видаляємо
-    convert(f"create_user\\easy-start-{full_name_ua_str}.docx", f"create_user\\easy-start-{full_name_ua_str}.pdf")
-    path_to_delete_file = Path(f"create_user\\easy-start-{full_name_ua_str}.docx")
-    path_to_delete_file.unlink(missing_ok=True)
+    libreoffice_path = r"C:\\Program Files\\LibreOffice\\program\\soffice.com"
+    docx_file_path = Path(f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.docx")
+    output_dir = docx_file_path.parent
+    command = [
+        libreoffice_path,
+        "--headless",
+        "--convert-to", "pdf",
+        str(docx_file_path),
+        "--outdir", str(output_dir)
+    ]
+
+
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+        print("PDF успішно згенеровано!")
+        docx_file_path.unlink(missing_ok=True)
+
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Помилка при конвертації LibreOffice: {e.stderr.decode(errors='ignore')}")
+
+
+    except FileNotFoundError:
+        print(f"Не знайдено LibreOffice за шляхом: {libreoffice_path}. Перевірте, чи він встановлений на віртуалці.")
+
 
     # Шлях до файлу, який хочемо прикріпити
-    file_to_attach = f"create_user\\easy-start-{full_name_ua_str}.pdf"
+    file_to_attach = f"create_user\\easy-start-docx\\easy-start-{full_name_ua_str}.pdf"
     encoded_file = get_base64_content(file_to_attach)
     
     logger.success("PDF файл сформовано")
@@ -49,7 +100,7 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
     html_content = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif;">
         <p>Вітаю!</p>
-        <p">До команди приєдрунється новий співробітник.</p>
+        <p>До команди приєдрунється новий співробітник.</p>
         <p>У вкладені стартова інструкція для {full_name_ua_str}.</p>
         <p>Гарного дня!</p>
     </div>
@@ -62,12 +113,13 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
         client_credential=settings.CLIENT_SECRET,
     )
 
-    result = send.acquire_token_silent(settings.SCOPES, account=None)
-    if not result:
-        result = send.acquire_token_for_client(scopes=settings.SCOPES)
 
-    if "access_token" in result:
-        access_token = result["access_token"]
+    result = send.acquire_token_silent(settings.SCOPES, account=None)
+    if not result: result = send.acquire_token_for_client(scopes=settings.SCOPES)
+
+
+    if "access_token" in result: access_token = result["access_token"]
+
 
     endpoint = f"https://graph.microsoft.com/v1.0/users/{settings.SENDER_EMAIL}/sendMail"
 
@@ -98,7 +150,6 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
                 {
                     "@odata.type": "#microsoft.graph.fileAttachment",
                     "name": f"easy-start-{full_name_ua_str}.pdf",
-                    # "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  якщо всетаки буде docx
                     "contentType": "application/pdf",
                     "contentBytes": encoded_file
                 }
@@ -114,5 +165,4 @@ def send_email(data: PowerAutomateData, user_password: str, manager_email: str):
         path_to_delete_file = Path(file_to_attach)
         path_to_delete_file.unlink(missing_ok=True)
 
-    else:
-        logger.error(f"Помилка відправлення листа: {response.status_code} - {response.text}")
+    else: logger.error(f"Помилка відправлення листа: {response.status_code} - {response.text}")
