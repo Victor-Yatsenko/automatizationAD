@@ -18,7 +18,6 @@ logger.opt(raw=True).info("\n""\n\n")
 
 try:
     # env
-    # logger.info("Отримання змінних оточення")
     dotenv.load_dotenv()
     CLIENT_ID     = os.environ["CLIENT_ID"]
     TENANT_ID     = os.environ["TENANT_ID"]

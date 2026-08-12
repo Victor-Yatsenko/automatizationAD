@@ -73,6 +73,5 @@ async def create_user_in_AD(
 
 
 if __name__ == "__main__":
-    # Щоб сервер працював і чекав на запити, потрібно використовувати uvicorn
     uvicorn.run("main:app", host=settings.HOST, port=int(settings.PORT), reload=True)
 
