@@ -2,6 +2,7 @@ __pycache__/
 .LOGS/
 .vscode/
 create_user/settings_for_ad/
+create_user/easy_start_docx/
 *.docx
 
 
